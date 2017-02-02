@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_57605_slushbucke.SlushBucketUtil</api_name>
+        <client_callable>true</client_callable>
+        <description>Builds a map of a table - the relationships between record sin the table.</description>
+        <name>SlushBucketUtil</name>
+        <script><![CDATA[var SlushBucketUtil = Class.create();
+SlushBucketUtil.prototype = Object.extendsObject(AbstractAjaxProcessor, {
+	
+	buildMapFromClassArray: function () {
+		var userClassArray = String(this.getParameter('sysparm_user_class_array')).split(',');
+		var userClassMap = {};
+		
+		var userClassGr = new GlideRecord('table name goes here');
+		userClassGr.addQuery('sys_id', 'IN', userClassArray.join(','));
+		userClassGr._query();
+		
+		while (userClassGr._next()) {
+			userClassMap[userClassGr.getUniqueValue()] = {
+				guid: userClassGr.getUniqueValue(),
+				parent: userClassGr.getValue('u_parent'),
+				name: userClassGr.getValue('u_name')
+			};
+		}
+		
+		// turn user array into a JSON encoded string
+		var json = new JSON();
+		
+		// return answer
+		return json.encode(userClassMap);
+	},
+	
+	// functions
+	getUserClass : function () {
+		var user_class_id = this.getParameter('sysparm_user_class_id');
+		
+		var gr = new GlideRecord('table name goes here');
+		gr.get(user_class_id);
+		
+		if(!gr.u_select_children) {
+			return;
+		}
+		
+		var user_class = new Array();
+		
+		this.getAllChildren(user_class_id, user_class);
+		
+		// turn user array into a JSON encoded string
+		var json = new JSON();
+		var data = json.encode(user_class);
+		
+		// return answer
+		return data;
+	},
+	
+	getAllChildren : function (user_class_id, user_class_array){
+		var gr = new GlideRecord('table name goes here');
+		gr.addQuery('u_parent', user_class_id);
+		gr.query();
+		
+		while(gr.next()) {
+			var object = {};
+			object.sys_id = String(gr.sys_id);
+			object.u_name = gr.getDisplayValue('u_name');
+			// Loop through adding children to the array
+			user_class_array.push(object);
+			/**
+ 			* If the Child being added is a parent,
+ 			* recursively call the method again with the new module id to get the grand children
+ 			*/
+			if(gr.u_isparent) {
+				this.getAllChildren(gr.sys_id, user_class_array);
+			}
+		}
+	},
+	
+	type: 'SlushBucketUtil'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2017-02-02 00:03:33</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>04bf45bb0f2432004e7f87ece1050e53</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>SlushBucketUtil</sys_name>
+        <sys_package display_value="SlushBucket Move Options" source="x_57605_slushbucke">fb3f09370f2432004e7f87ece1050ec6</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="SlushBucket Move Options">fb3f09370f2432004e7f87ece1050ec6</sys_scope>
+        <sys_update_name>sys_script_include_04bf45bb0f2432004e7f87ece1050e53</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2017-02-02 00:03:33</sys_updated_on>
+    </sys_script_include>
+</record_update>
